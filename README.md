@@ -1,1 +1,3 @@
 # uts-grafika
+Kenji
+Samuel
