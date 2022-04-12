@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>,,,</title>
+    <style>
+      #canvas {
+        border: 2px solid black;
+      }
+      #canvas2 {
+        border: 2px solid black;
+      }
+    </style>
+    <script src="./Library.js"></script>
+  </head>
+  <body>
+    <input type="color" id="colorWell" name="head" value="#e66465" />
+    <canvas id="canvas" width="400" height="400"></canvas>
+    <button id="buttonMenggambar" type="submit" onclick="menggambar()">
+      Menggambar
+    </button>
+    <button id="buttonMewarnai" type="submit" onclick="mewarnai()">
+      Mewarnai
+    </button>
+    <button id="button" type="submit" onclick="copy()">Copy</button>
+    <canvas id="canvas2" width="400" height="400"></canvas>
+
+    <!-- handle button -->
+    <script>
+      var gambar = true;
+
+      const menggambar = () => {
+        gambar = true;
+      };
+      const mewarnai = () => {
+        gambar = false;
+      };
+      const copy = () => {
+        canvas2();
+      };
+      const button = document.querySelector("#button");
+      button.disabled = true;
+    </script>
+
+    <!-- handle drawing on Canvas 1-->
+    <script>
+      // handle color
+      var color = "#0000ff";
+      const updateColor = (e) => {
+        color = e.target.value;
+      };
+      colorWell = document.querySelector("#colorWell");
+      colorWell.addEventListener("change", updateColor, false);
+      colorWell.value = color;
+
+      function hexToRgb(hex) {
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result
+          ? {
+              r: parseInt(result[1], 16),
+              g: parseInt(result[2], 16),
+              b: parseInt(result[3], 16),
+            }
+          : null;
+      }
+
+      //end of handle color
+      var canvas = document.querySelector("#canvas");
+      var ctx = canvas.getContext("2d");
+      var imageData = ctx.getImageData(
+        0,
+        0,
+        canvas.clientWidth,
+        canvas.clientHeight
+      );
+
+      var array = [];
+      var arrayTemp = [];
+      // left click
+      canvas.addEventListener("click", function (e) {
+        var selectedColor = hexToRgb(color);
+        console.log(selectedColor);
+        if (gambar == true) {
+          arrayTemp.push({ x: e.offsetX, y: e.offsetY });
+          titik(
+            imageData,
+            e.offsetX,
+            e.offsetY,
+            selectedColor.r,
+            selectedColor.g,
+            selectedColor.b
+          );
+          if (arrayTemp.length > 1) {
+            garis(
+              imageData,
+              arrayTemp[arrayTemp.length - 2].x,
+              arrayTemp[arrayTemp.length - 2].y,
+              arrayTemp[arrayTemp.length - 1].x,
+              arrayTemp[arrayTemp.length - 1].y,
+              selectedColor.r,
+              selectedColor.g,
+              selectedColor.b
+            );
+          }
+        } else if (gambar == false) {
+          var p = ctx.getImageData(e.offsetX, e.offsetY, 1, 1).data;
+          console.log(p);
+          floodFillStack(
+            imageData,
+            canvas,
+            e.offsetX,
+            e.offsetY,
+            { r: p[0], g: p[1], b: p[2] },
+            {
+              r: selectedColor.r,
+              g: selectedColor.g,
+              b: selectedColor.b,
+            }
+          );
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+      });
+
+      //right click
+      canvas.addEventListener("contextmenu", function (e) {
+        var selectedColor = hexToRgb(color);
+        e.preventDefault();
+        if (gambar == true) {
+          if (arrayTemp.length > 2) {
+            button.disabled = false;
+            garis(
+              imageData,
+              arrayTemp[arrayTemp.length - 1].x,
+              arrayTemp[arrayTemp.length - 1].y,
+              arrayTemp[0].x,
+              arrayTemp[0].y,
+              selectedColor.r,
+              selectedColor.g,
+              selectedColor.b
+            );
+            array.push(arrayTemp);
+            arrayTemp = [];
+          }
+        }
+        console.log(array);
+        ctx.putImageData(imageData, 0, 0);
+      });
+      ctx.putImageData(imageData, 0, 0);
+
+      // handle copy to canvas 2
+      const canvas2 = () => {
+        var selectedColor = hexToRgb(color);
+        var canvas2 = document.querySelector("#canvas2");
+        var ctx2 = canvas2.getContext("2d");
+        var imageData2 = ctx2.getImageData(
+          0,
+          0,
+          canvas2.clientWidth,
+          canvas2.clientHeight
+        );
+        for (var j = 0; j < array.length; j++) {
+          for (var i = 0; i < array[j].length - 1; i++) {
+            garis(
+              imageData2,
+              array[j][i].x,
+              array[j][i].y,
+              array[j][i + 1].x,
+              array[j][i + 1].y,
+              selectedColor.r,
+              selectedColor.g,
+              selectedColor.b
+            );
+          }
+          garis(
+            imageData2,
+            array[j][array[j].length - 1].x,
+            array[j][array[j].length - 1].y,
+            array[j][0].x,
+            array[j][0].y,
+            selectedColor.r,
+            selectedColor.g,
+            selectedColor.b
+          );
+        }
+
+        console.log(array);
+        ctx2.putImageData(imageData2, 0, 0);
+      };
+    </script>
+  </body>
+</html>
